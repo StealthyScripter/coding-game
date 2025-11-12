@@ -93,7 +93,6 @@ const CodeQuest = () => {
     textGradient: { background: 'linear-gradient(90deg, #a78bfa 0%, #c084fc 50%, #e879f9 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' },
   };
 
-  // --- NEW: simple pages for non-SQL techs (navigation like “opening different pages”) ---
   const TechPage = ({ tech }: { tech: Exclude<Technology, 'home' | 'sql'> }) => {
     const meta = {
       linux: {
@@ -160,16 +159,20 @@ const CodeQuest = () => {
       </>
     );
   };
-  // --- END NEW ---
 
   return (
     <div style={{ minHeight: '100vh', ...styles.bgPrimary, color: '#fff' }}>
-      {/* Placeholder style block */}
       <style>
         {`
           .sql-input::placeholder {
             color: #6b7280;
             opacity: 1;
+          }
+          .hover-zoom {
+            transition: transform 0.2s;
+          }
+          .hover-zoom:hover {
+            transform: scale(1.02);
           }
         `}
       </style>
@@ -217,13 +220,57 @@ const CodeQuest = () => {
         {currentView === 'home' ? (
           <>
             {/* Hero */}
-            <div style={{ textAlign: 'center', padding: '4rem 0', marginBottom: '3rem' }}>
-              <h1 style={{ fontSize: '4.5rem', fontWeight: 900, marginBottom: '1rem', ...styles.textGradient }}>
-                Master Code Through Play
-              </h1>
-              <p style={{ fontSize: '1.25rem', color: '#9ca3af' }}>
-                Interactive challenges, real-time feedback, and gamified learning paths
-              </p>
+            <div style={{ marginBottom: '3rem' }}>
+              <div style={{ textAlign: 'center', padding: '3rem 0 2rem', marginBottom: '2rem' }}>
+                <h1 style={{ fontSize: '4.5rem', fontWeight: 900, marginBottom: '1rem', ...styles.textGradient }}>
+                  Master Code Through Play
+                </h1>
+                <p style={{ fontSize: '1.25rem', color: '#9ca3af', marginBottom: '2rem' }}>
+                  Interactive challenges, real-time feedback, and gamified learning paths
+                </p>
+              </div>
+
+              {/* Stats Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
+                {[
+                  { icon: '🎯', label: 'Challenges Completed', value: '24', color: '#a78bfa' },
+                  { icon: '⚡', label: 'Current Streak', value: '7 days', color: '#fbbf24' },
+                  { icon: '🏆', label: 'Total XP', value: '2,450', color: '#22c55e' },
+                  { icon: '📚', label: 'Skills Mastered', value: '3', color: '#3b82f6' }
+                ].map((stat, idx) => (
+                  <div key={idx} style={{ borderRadius: '24px', ...styles.bgCard, ...styles.borderLight, padding: '1.5rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>{stat.icon}</div>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: stat.color, marginBottom: '0.25rem' }}>
+                      {stat.value}
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Quick Actions */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+                {[
+                  { icon: '🎓', title: 'Continue Learning', desc: 'Pick up where you left off', action: 'SQL Level 4' },
+                  { icon: '🎯', title: 'Practice Mode', desc: 'Sharpen your skills', action: 'Random Challenge' },
+                  { icon: '🏅', title: 'Achievements', desc: 'View your progress', action: '8 Unlocked' }
+                ].map((action, idx) => (
+                  <div key={idx}
+                  className="hover-zoom"
+                    style={{
+                      borderRadius: '20px',
+                      ...styles.bgCard,
+                      ...styles.borderLight,
+                      padding: '1.5rem',
+                      cursor: 'pointer'
+                    }}>
+                    <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>{action.icon}</div>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{action.title}</h3>
+                    <p style={{ fontSize: '0.875rem', color: '#9ca3af', marginBottom: '1rem' }}>{action.desc}</p>
+                    <div style={{ fontSize: '0.875rem', color: '#a78bfa', fontWeight: 600 }}>{action.action} →</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Daily Challenge */}
@@ -292,78 +339,63 @@ const CodeQuest = () => {
               ))}
             </div>
 
-            {/* Leaderboard */}
-            <div style={{ borderRadius: '24px', ...styles.bgCard, ...styles.borderLight, padding: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <Trophy style={{ width: '28px', height: '28px', color: '#eab308' }} />
-                  <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Leaderboard</h2>
+            {/* Recent Activity & Achievements */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+              {/* Recent Activity */}
+              <div style={{ borderRadius: '24px', ...styles.bgCard, ...styles.borderLight, padding: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                  <Clock style={{ width: '28px', height: '28px', color: '#3b82f6' }} />
+                  <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Recent Activity</h2>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {['Daily', 'Weekly', 'All Time'].map((filter, idx) => (
-                    <button
-                      key={filter}
-                      style={{
-                        padding: '0.5rem 1rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        border: 'none',
-                        cursor: 'pointer',
-                        ...(idx === 0 ? { ...styles.gradientPurple, color: '#fff' } : { ...styles.bgCardDark, color: '#fff' })
-                      }}
-                    >
-                      {filter}
-                    </button>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {[
+                    { icon: '✅', text: 'Completed SQL Level 3', time: '2 hours ago', xp: '+100 XP' },
+                    { icon: '🔥', text: '7-day streak milestone!', time: '1 day ago', xp: '+500 XP' },
+                    { icon: '🎯', text: 'Finished CSS Challenge', time: '2 days ago', xp: '+150 XP' },
+                    { icon: '⭐', text: 'Unlocked SQL Master badge', time: '3 days ago', xp: 'Badge' }
+                  ].map((activity, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', borderRadius: '16px', ...styles.bgCardDark }}>
+                      <div style={{ fontSize: '1.5rem' }}>{activity.icon}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{activity.text}</div>
+                        <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>{activity.time}</div>
+                      </div>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#22c55e' }}>{activity.xp}</div>
+                    </div>
                   ))}
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {[
-                  { rank: 1, name: "Sarah Chen", level: 28, title: "Master", score: 12450, avatar: "S", medalColor: 'linear-gradient(135deg, #fbbf24, #f97316)' },
-                  { rank: 2, name: "Mike Johnson", level: 24, title: "Expert", score: 10230, avatar: "M", medalColor: 'linear-gradient(135deg, #d1d5db, #6b7280)' },
-                  { rank: 3, name: "Alex Rodriguez", level: 22, title: "Expert", score: 9890, avatar: "A", medalColor: 'linear-gradient(135deg, #fb923c, #ea580c)' },
-                  { rank: 12, name: "You", level: 12, title: "Intermediate", score: 8450, avatar: "B", isUser: true }
-                ].map((user) => (
-                  <div
-                    key={user.rank}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem',
-                      padding: '1rem',
+              {/* Achievements */}
+              <div style={{ borderRadius: '24px', ...styles.bgCard, ...styles.borderLight, padding: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                  <Trophy style={{ width: '28px', height: '28px', color: '#eab308' }} />
+                  <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Achievements</h2>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                  {[
+                    { emoji: '🥇', name: 'First Query', unlocked: true },
+                    { emoji: '🔥', name: 'Week Streak', unlocked: true },
+                    { emoji: '🎯', name: 'Perfect Score', unlocked: true },
+                    { emoji: '⚡', name: 'Speed Runner', unlocked: false },
+                    { emoji: '🏆', name: 'Champion', unlocked: false },
+                    { emoji: '🌟', name: 'Master', unlocked: false }
+                  ].map((badge, idx) => (
+                    <div key={idx} style={{
                       borderRadius: '16px',
-                      ...(user.isUser ? { backgroundColor: 'rgba(139, 92, 246, 0.2)', border: '1px solid rgba(139, 92, 246, 0.4)' } : styles.bgCardDark)
-                    }}
-                  >
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 'bold',
-                      ...(user.medalColor ? { background: user.medalColor } : styles.bgCardDark)
+                      ...styles.bgCardDark,
+                      padding: '1rem',
+                      textAlign: 'center',
+                      opacity: badge.unlocked ? 1 : 0.4,
+                      border: badge.unlocked ? '2px solid #eab308' : '1px solid rgba(255, 255, 255, 0.1)'
                     }}>
-                      {user.rank}
+                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{badge.emoji}</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 600 }}>{badge.name}</div>
                     </div>
-
-                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', ...styles.gradientPurple, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.125rem' }}>
-                      {user.avatar}
-                    </div>
-
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600 }}>{user.name}</div>
-                      <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>Level {user.level} • {user.title}</div>
-                    </div>
-
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', ...styles.textGradient }}>
-                      {user.score.toLocaleString()}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </>
