@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Trophy, Flame, Star, Zap, Clock, Target,
   Lightbulb, BookOpen, Play, RefreshCw, CheckCircle, XCircle,
-  ChevronLeft, Database
+  ChevronLeft, Database, Terminal, Palette, Package
 } from 'lucide-react';
 
 type Technology = 'sql' | 'linux' | 'css' | 'docker' | 'home';
@@ -92,6 +92,75 @@ const CodeQuest = () => {
     gradientXP: { background: 'linear-gradient(90deg, #06b6d4 0%, #a855f7 50%, #ec4899 100%)' },
     textGradient: { background: 'linear-gradient(90deg, #a78bfa 0%, #c084fc 50%, #e879f9 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' },
   };
+
+  // --- NEW: simple pages for non-SQL techs (navigation like “opening different pages”) ---
+  const TechPage = ({ tech }: { tech: Exclude<Technology, 'home' | 'sql'> }) => {
+    const meta = {
+      linux: {
+        title: 'Linux Command Line',
+        icon: <Terminal style={{ width: 24, height: 24, color: '#10b981' }} />,
+        blurb: 'Navigate the terminal, manage files, and master permissions.',
+        bullets: ['Navigation basics', 'File operations', 'Permissions & ownership', 'Pipes & redirection', 'Shell scripting (intro)']
+      },
+      css: {
+        title: 'CSS Wizardry',
+        icon: <Palette style={{ width: 24, height: 24, color: '#f472b6' }} />,
+        blurb: 'Modern layouts and animations with Flexbox and Grid.',
+        bullets: ['Selectors & specificity', 'Flexbox essentials', 'CSS Grid patterns', 'Transitions & keyframes', 'Responsive design']
+      },
+      docker: {
+        title: 'Docker Containers',
+        icon: <Package style={{ width: 24, height: 24, color: '#06b6d4' }} />,
+        blurb: 'Build, ship, and run portable apps with Docker.',
+        bullets: ['Images vs containers', 'Dockerfiles', 'Volumes & networks', 'Compose basics', 'Best practices']
+      }
+    }[tech];
+
+    return (
+      <>
+        <button
+          onClick={() => setCurrentView('home')}
+          style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '1rem' }}
+        >
+          <ChevronLeft style={{ width: '16px', height: '16px' }} />
+          Back to Home
+        </button>
+
+        <div style={{ borderRadius: '24px', ...styles.bgCard, ...styles.borderLight, padding: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            {meta.icon}
+            <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>{meta.title}</h2>
+          </div>
+          <p style={{ color: '#9ca3af', fontSize: '1.125rem', marginBottom: '1.5rem' }}>{meta.blurb}</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            {meta.bullets.map((b, i) => (
+              <div key={i} style={{ borderRadius: '16px', ...styles.bgCardDark, ...styles.borderLight, padding: '1rem' }}>
+                <div style={{ fontWeight: 600, color: '#a78bfa', marginBottom: '0.25rem' }}>Module {i + 1}</div>
+                <div style={{ color: '#d1d5db' }}>{b}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button
+              onClick={() => setCurrentView('home')}
+              style={{ padding: '0.75rem 1.5rem', borderRadius: '12px', ...styles.bgCardDark, ...styles.borderLight, fontWeight: 600, color: '#fff', cursor: 'pointer' }}
+            >
+              Back
+            </button>
+            <button
+              onClick={() => setCurrentView('sql')}
+              style={{ padding: '0.75rem 1.5rem', borderRadius: '12px', ...styles.gradientPurple, border: 'none', fontWeight: 600, color: '#fff', cursor: 'pointer' }}
+            >
+              Try a SQL Challenge →
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  };
+  // --- END NEW ---
 
   return (
     <div style={{ minHeight: '100vh', ...styles.bgPrimary, color: '#fff' }}>
@@ -298,7 +367,7 @@ const CodeQuest = () => {
               </div>
             </div>
           </>
-        ) : (
+        ) : currentView === 'sql' ? (
           <>
             <button
               onClick={() => setCurrentView('home')}
@@ -405,7 +474,7 @@ const CodeQuest = () => {
                     type="text"
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                     placeholder="SELECT * FROM employees WHERE ..."
                     style={{
                       width: '100%',
@@ -466,6 +535,12 @@ const CodeQuest = () => {
               )}
             </div>
           </>
+        ) : currentView === 'linux' ? (
+          <TechPage tech="linux" />
+        ) : currentView === 'css' ? (
+          <TechPage tech="css" />
+        ) : (
+          <TechPage tech="docker" />
         )}
       </div>
     </div>
