@@ -1,425 +1,336 @@
-import React, { useState, useEffect } from 'react';
-import { CheckCircle, Lightbulb, RefreshCw, Book, Palette } from 'lucide-react';
+// FILE: src/components/CSSGame.tsx
+import React, { useState } from 'react';
+import {
+  Palette, Target, Lightbulb, BookOpen, Play,
+  RefreshCw, CheckCircle, XCircle, ChevronLeft, Award
+} from 'lucide-react';
 
-interface CSSLevel {
+interface Level {
   id: number;
   title: string;
-  description: string;
+  task: string;
   hint: string;
+  concept: string;
   solution: string;
-  concept: {
-    title: string;
-    content: string;
-  };
-  visualData: {
-    htmlStructure: string;
-    targetStyle: {
-      [key: string]: string;
-    };
-    elements: Array<{
-      id: string;
-      type: string;
-      content: string;
-      currentStyle?: {
-        [key: string]: string;
-      };
-    }>;
-  };
+  preview: React.ReactNode;
 }
 
-interface Feedback {
-  type: 'success' | 'error';
-  message: string;
+interface CSSGameProps {
+  onBack: () => void;
+  onComplete: (xp: number) => void;
 }
 
-interface ExecutionResult {
-  success: boolean;
-  data?: string;
-  error?: string;
-}
-
-const CSSGame: React.FC = () => {
+const CSSGame: React.FC<CSSGameProps> = ({ onBack, onComplete }) => {
   const [currentLevel, setCurrentLevel] = useState(1);
   const [userInput, setUserInput] = useState('');
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [showConcept, setShowConcept] = useState(false);
-  const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
-  console.log("execute state: ", executionResult)
   const [completedLevels, setCompletedLevels] = useState<number[]>([]);
-  const [previewStyle, setPreviewStyle] = useState<string>('');
+  const [applyStyle, setApplyStyle] = useState(false);
 
-  const levels: CSSLevel[] = [
+  const levels: Level[] = [
     {
       id: 1,
       title: "Change Text Color",
-      description: "Make the heading text red",
-      hint: "Use the color property",
-      solution: "h1 { color: red; }",
-      concept: {
-        title: "Color Property",
-        content: "The color property sets the text color. You can use color names (red, blue), hex codes (#FF0000), or RGB values (rgb(255, 0, 0))."
-      },
-      visualData: {
-        htmlStructure: "<h1>Hello World</h1>",
-        targetStyle: {
-          color: "red"
-        },
-        elements: [
-          { id: "heading", type: "h1", content: "Hello World" }
-        ]
-      }
+      task: "Make the heading text purple",
+      hint: "Use 'color: purple;' inside the h1 selector",
+      concept: "The color property changes text color. Use color names, hex codes (#9333EA), or rgb values.",
+      solution: "h1 { color: purple; }",
+      preview: <h1 style={{ color: applyStyle ? 'purple' : 'white' }} className="text-3xl font-bold">Hello CodeQuest!</h1>
     },
     {
       id: 2,
-      title: "Background Color",
-      description: "Give the div a blue background",
-      hint: "Use the background-color property",
-      solution: "div { background-color: blue; }",
-      concept: {
-        title: "Background Color",
-        content: "The background-color property sets the background color of an element. It accepts the same color values as the color property."
-      },
-      visualData: {
-        htmlStructure: '<div class="box">Box</div>',
-        targetStyle: {
-          backgroundColor: "blue"
-        },
-        elements: [
-          { id: "box", type: "div", content: "Box", currentStyle: { width: "200px", height: "100px", border: "1px solid #ccc" } }
-        ]
-      }
+      title: "Add Background Color",
+      task: "Give the box a gradient blue background",
+      hint: "Use 'background: linear-gradient(to right, #3b82f6, #1e40af);'",
+      concept: "Backgrounds can be solid colors or gradients. Gradients blend multiple colors smoothly.",
+      solution: ".box { background: linear-gradient(to right, #3b82f6, #1e40af); }",
+      preview: (
+        <div
+          style={{
+            background: applyStyle ? 'linear-gradient(to right, #3b82f6, #1e40af)' : '#374151',
+            padding: '2rem',
+            borderRadius: '1rem'
+          }}
+          className="text-center font-bold"
+        >
+          Styled Box
+        </div>
+      )
     },
     {
       id: 3,
-      title: "Flexbox Center",
-      description: "Center the item both horizontally and vertically",
-      hint: "Use display: flex with justify-content and align-items",
+      title: "Center with Flexbox",
+      task: "Center the item both horizontally and vertically",
+      hint: "Use 'display: flex; justify-content: center; align-items: center;'",
+      concept: "Flexbox is powerful for layouts. justify-content aligns horizontally, align-items vertically.",
       solution: ".container { display: flex; justify-content: center; align-items: center; }",
-      concept: {
-        title: "Flexbox Centering",
-        content: "Flexbox is a powerful layout method. Use display: flex on the container, then justify-content: center (horizontal) and align-items: center (vertical) to center items."
-      },
-      visualData: {
-        htmlStructure: '<div class="container"><div class="item">Center Me</div></div>',
-        targetStyle: {
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center"
-        },
-        elements: [
-          { 
-            id: "container", 
-            type: "div", 
-            content: "", 
-            currentStyle: { width: "300px", height: "200px", border: "2px solid #333" }
-          },
-          {
-            id: "item",
-            type: "div",
-            content: "Center Me",
-            currentStyle: { width: "100px", height: "50px", backgroundColor: "#4CAF50", color: "white" }
-          }
-        ]
-      }
+      preview: (
+        <div
+          style={{
+            display: applyStyle ? 'flex' : 'block',
+            justifyContent: applyStyle ? 'center' : 'flex-start',
+            alignItems: applyStyle ? 'center' : 'flex-start',
+            height: '200px',
+            border: '2px solid #6366f1',
+            borderRadius: '1rem'
+          }}
+        >
+          <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 rounded-xl font-bold">
+            Center Me!
+          </div>
+        </div>
+      )
     },
     {
       id: 4,
-      title: "Box Shadow",
-      description: "Add a shadow to the card",
-      hint: "Use the box-shadow property",
-      solution: ".card { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }",
-      concept: {
-        title: "Box Shadow",
-        content: "box-shadow adds shadow effects. Syntax: offset-x offset-y blur-radius spread-radius color. Example: 0 4px 6px rgba(0,0,0,0.1)"
-      },
-      visualData: {
-        htmlStructure: '<div class="card">Card Content</div>',
-        targetStyle: {
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
-        },
-        elements: [
-          { 
-            id: "card", 
-            type: "div", 
-            content: "Card Content", 
-            currentStyle: { width: "250px", padding: "20px", backgroundColor: "white", borderRadius: "8px" }
-          }
-        ]
-      }
+      title: "Add Border Radius",
+      task: "Make the card have rounded corners (2rem)",
+      hint: "Use 'border-radius: 2rem;'",
+      concept: "border-radius rounds corners. Use px, rem, or % values. 50% creates a circle.",
+      solution: ".card { border-radius: 2rem; }",
+      preview: (
+        <div
+          style={{
+            borderRadius: applyStyle ? '2rem' : '0',
+            background: 'linear-gradient(135deg, #ec4899, #f43f5e)',
+            padding: '2rem'
+          }}
+          className="font-bold text-center"
+        >
+          Card with Rounded Corners
+        </div>
+      )
     },
     {
       id: 5,
-      title: "Hover Effect",
-      description: "Make the button change color on hover",
-      hint: "Use the :hover pseudo-class",
-      solution: "button:hover { background-color: #2196F3; }",
-      concept: {
-        title: "Hover Pseudo-class",
-        content: "The :hover pseudo-class applies styles when the user hovers over an element. Common for interactive elements like buttons and links."
-      },
-      visualData: {
-        htmlStructure: '<button class="btn">Hover Me</button>',
-        targetStyle: {
-          backgroundColor: "#2196F3"
-        },
-        elements: [
-          { 
-            id: "button", 
-            type: "button", 
-            content: "Hover Me", 
-            currentStyle: { 
-              padding: "10px 20px", 
-              backgroundColor: "#4CAF50", 
-              color: "white", 
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer"
-            }
-          }
-        ]
-      }
+      title: "Add Box Shadow",
+      task: "Add a purple shadow to the button",
+      hint: "Use 'box-shadow: 0 10px 30px rgba(147, 51, 234, 0.5);'",
+      concept: "box-shadow adds depth. Format: x-offset y-offset blur spread color.",
+      solution: "button { box-shadow: 0 10px 30px rgba(147, 51, 234, 0.5); }",
+      preview: (
+        <div className="flex justify-center">
+          <button
+            style={{
+              boxShadow: applyStyle ? '0 10px 30px rgba(147, 51, 234, 0.5)' : 'none'
+            }}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-4 rounded-xl font-bold text-lg"
+          >
+            Click Me!
+          </button>
+        </div>
+      )
     }
   ];
 
-  const currentLevelData = levels[currentLevel - 1];
+  const level = levels[currentLevel - 1];
 
-  // Load progress from localStorage
-  useEffect(() => {
-    const savedProgress = localStorage.getItem('cssGameProgress');
-    if (savedProgress) {
-      const progress = JSON.parse(savedProgress);
-      setCompletedLevels(progress.completedLevels || []);
-    }
-  }, []);
+  const handleSubmit = () => {
+    const normalized = userInput.trim().toLowerCase().replace(/\s+/g, ' ');
+    const solutionNormalized = level.solution.toLowerCase().replace(/\s+/g, ' ');
 
-  // Save progress
-  const saveProgress = () => {
-    localStorage.setItem('cssGameProgress', JSON.stringify({
-      completedLevels
-    }));
-  };
+    if (normalized === solutionNormalized) {
+      setFeedback({ type: 'success', message: '🎉 Perfect! +100 XP' });
+      setApplyStyle(true);
 
-  const executeCommand = (command: string) => {
-    // Simple CSS validation
-    const normalizedCommand = command.trim().toLowerCase();
-    const normalizedSolution = currentLevelData.solution.toLowerCase();
-    
-    if (normalizedCommand === normalizedSolution) {
-      setFeedback({ type: 'success', message: 'Perfect! Your CSS is correct!' });
-      setExecutionResult({ success: true, data: 'Styles applied successfully' });
-      setPreviewStyle(command);
-      
-      // Mark level as completed
       if (!completedLevels.includes(currentLevel)) {
-        const newCompletedLevels = [...completedLevels, currentLevel];
-        setCompletedLevels(newCompletedLevels);
-        saveProgress();
+        setCompletedLevels([...completedLevels, currentLevel]);
       }
-      
-      // Auto advance after 2 seconds
+
       setTimeout(() => {
+        onComplete(100);
         if (currentLevel < levels.length) {
           setCurrentLevel(currentLevel + 1);
           setUserInput('');
           setFeedback(null);
-          setExecutionResult(null);
           setShowHint(false);
-          setPreviewStyle('');
+          setShowConcept(false);
+          setApplyStyle(false);
         }
       }, 2000);
     } else {
-      setFeedback({ type: 'error', message: 'Not quite right. Check your CSS syntax!' });
-      setExecutionResult({ success: false, error: 'Invalid CSS syntax' });
+      setFeedback({ type: 'error', message: '❌ Not quite right. Try again!' });
     }
   };
 
-  const renderVisualElement = () => {
-    const visualData = currentLevelData.visualData;
-    
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-xl font-bold mb-4 text-gray-800">HTML Preview</h3>
-        
-        <div className="bg-gray-50 p-4 rounded mb-4">
-          <pre className="text-sm text-gray-700 overflow-x-auto">
-            {visualData.htmlStructure}
-          </pre>
-        </div>
-        
-        <div className="border-2 border-gray-300 rounded p-8 bg-white" style={{ minHeight: '250px' }}>
-          {visualData.elements.map((element) => {
-            const styles = { ...element.currentStyle };
-            
-            // Apply user styles for preview (simplified)
-            if (previewStyle) {
-              Object.assign(styles, visualData.targetStyle);
-            }
-            
-            if (element.type === 'h1') {
-              return <h1 key={element.id} style={styles}>{element.content}</h1>;
-            } else if (element.type === 'div') {
-              return <div key={element.id} style={styles}>{element.content}</div>;
-            } else if (element.type === 'button') {
-              return <button key={element.id} style={styles}>{element.content}</button>;
-            }
-            return null;
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  const renderTargetStyle = () => {
-    const visualData = currentLevelData.visualData;
-    
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-xl font-bold mb-4 text-gray-800">Target Style</h3>
-        
-        <div className="bg-pink-50 p-4 rounded">
-          <p className="text-gray-700 mb-2">Your element should have these styles:</p>
-          <div className="bg-white p-3 rounded font-mono text-sm">
-            {Object.entries(visualData.targetStyle).map(([prop, value]) => (
-              <div key={prop} className="text-pink-600">
-                {prop}: {value};
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      <div className="flex items-center gap-4 mb-6">
-        <span className="text-gray-600 font-semibold">Progress:</span>
-        <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-500"
-            style={{ width: `${(currentLevel / levels.length) * 100}%` }}
-          />
+    <div>
+      <button
+        onClick={onBack}
+        className="mb-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        Back to Home
+      </button>
+
+      {/* Level Progress */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-3xl font-bold flex items-center gap-3">
+            <Palette className="w-8 h-8 text-pink-500" />
+            CSS Level {currentLevel}: {level.title}
+          </h2>
+          <p className="text-gray-400 mt-2">Create beautiful designs with CSS!</p>
         </div>
-        <span className="text-gray-600 font-semibold">
-          Level {currentLevel}/{levels.length}
-        </span>
+        <div className="flex gap-2">
+          {levels.map((l) => (
+            <div
+              key={l.id}
+              className={`w-3 h-3 rounded-full transition-all ${
+                completedLevels.includes(l.id) ? 'bg-green-500' :
+                l.id === currentLevel ? 'bg-gradient-to-r from-pink-500 to-rose-500 animate-pulse scale-125' :
+                'bg-white/20'
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Level Info */}
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-800">
-            {currentLevelData.title}
-          </h2>
-          <div className="flex gap-2">
+      <div className="grid lg:grid-cols-2 gap-6 mb-6">
+        {/* Task Panel */}
+        <div className="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Target className="w-5 h-5 text-pink-500" />
+            <h3 className="text-xl font-bold">Your Mission</h3>
+          </div>
+          <p className="text-gray-300 text-lg mb-6">{level.task}</p>
+
+          <div className="space-y-4">
             <button
               onClick={() => setShowConcept(!showConcept)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
+              className="w-full text-left"
             >
-              <Book className="w-4 h-4" />
-              Concept
+              <div className="rounded-2xl bg-cyan-500/10 border border-cyan-500/30 p-4 hover:bg-cyan-500/20 transition-all cursor-pointer">
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen className="w-4 h-4 text-cyan-500" />
+                  <span className="font-semibold text-cyan-500">Key Concept</span>
+                </div>
+                {showConcept && (
+                  <p className="text-sm text-gray-300 mt-2">{level.concept}</p>
+                )}
+              </div>
             </button>
-            <button
-              onClick={() => setShowHint(!showHint)}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
-            >
-              <Lightbulb className="w-4 h-4" />
-              Hint
-            </button>
+
+            {showHint && (
+              <div className="rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 animate-slide-down">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lightbulb className="w-4 h-4 text-yellow-500" />
+                  <span className="font-semibold text-yellow-500">Hint</span>
+                </div>
+                <p className="text-sm text-gray-300 font-mono">{level.hint}</p>
+              </div>
+            )}
           </div>
+
+          {completedLevels.length > 0 && (
+            <div className="mt-6 rounded-2xl bg-green-500/10 border border-green-500/30 p-4">
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-green-500" />
+                <span className="font-semibold text-green-500">
+                  {completedLevels.length} Level{completedLevels.length > 1 ? 's' : ''} Completed!
+                </span>
+              </div>
+            </div>
+          )}
         </div>
-        
-        <p className="text-gray-700 text-lg mb-4">{currentLevelData.description}</p>
-        
-        {showHint && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-            <p className="text-yellow-800">{currentLevelData.hint}</p>
+
+        {/* Live Preview */}
+        <div className="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Palette className="w-5 h-5 text-pink-500" />
+            <h3 className="text-xl font-bold">Live Preview</h3>
           </div>
-        )}
-        
-        {showConcept && (
-          <div className="bg-indigo-50 border-l-4 border-indigo-400 p-4 mb-4">
-            <h3 className="font-bold text-indigo-800 mb-2">{currentLevelData.concept.title}</h3>
-            <p className="text-indigo-700">{currentLevelData.concept.content}</p>
+          <div className="bg-gray-900 rounded-2xl p-8 min-h-[250px] flex items-center justify-center">
+            {level.preview}
           </div>
-        )}
+          <p className="text-sm text-gray-400 mt-4 text-center">
+            {applyStyle ? '✓ Style applied successfully!' : 'Write CSS to see changes'}
+          </p>
+        </div>
       </div>
 
-      {/* Visual Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* HTML Preview */}
-        <div>{renderVisualElement()}</div>
-        
-        {/* Target Style */}
-        <div>{renderTargetStyle()}</div>
-      </div>
-
-      {/* CSS Input */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex gap-4 items-center">
+      {/* Code Editor */}
+      <div className="rounded-3xl bg-[#1e1e2e] border border-white/10 overflow-hidden mb-6">
+        <div className="bg-[#2a2a3e] px-4 py-3 flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-red-500" />
+          <div className="w-3 h-3 rounded-full bg-yellow-500" />
+          <div className="w-3 h-3 rounded-full bg-green-500" />
+          <span className="ml-auto text-gray-400 text-sm font-mono">style.css</span>
+        </div>
+        <div className="p-6">
           <input
             type="text"
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && executeCommand(userInput)}
-            placeholder="Type your CSS rule here..."
-            className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-pink-500 focus:outline-none text-lg font-mono"
+            onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
+            placeholder="selector { property: value; }"
+            className="w-full bg-transparent border-none outline-none text-lg font-mono text-gray-100 placeholder-gray-600"
           />
-          <button
-            onClick={() => executeCommand(userInput)}
-            className="px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors flex items-center gap-2 font-semibold"
-          >
-            <Palette className="w-5 h-5" />
-            Apply CSS
-          </button>
-          <button
-            onClick={() => {
-              setUserInput('');
-              setFeedback(null);
-              setExecutionResult(null);
-              setPreviewStyle('');
-            }}
-            className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 font-semibold"
-          >
-            <RefreshCw className="w-5 h-5" />
-            Reset
-          </button>
         </div>
-        
-        {feedback && (
-          <div className={`mt-4 p-4 rounded-lg ${
-            feedback.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-          }`}>
-            {feedback.message}
-          </div>
-        )}
       </div>
 
-      {/* Level Selector */}
-      <div className="mt-6 bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-xl font-bold mb-4 text-gray-800">Level Selection</h3>
-        <div className="flex gap-3 flex-wrap">
-          {levels.map((level) => (
-            <button
-              key={level.id}
-              onClick={() => setCurrentLevel(level.id)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                currentLevel === level.id 
-                  ? 'bg-pink-600 text-white' 
-                  : completedLevels.includes(level.id)
-                  ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              {completedLevels.includes(level.id) && (
-                <CheckCircle className="inline w-4 h-4 mr-1" />
-              )}
-              Level {level.id}
-            </button>
-          ))}
-        </div>
+      {/* Action Buttons */}
+      <div className="flex justify-center gap-4 mb-6">
+        <button
+          onClick={() => setShowHint(!showHint)}
+          className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold flex items-center gap-2 transition-all hover:scale-105"
+        >
+          <Lightbulb className="w-4 h-4 text-yellow-500" />
+          {showHint ? 'Hide Hint' : 'Show Hint'}
+        </button>
+        <button
+          onClick={() => {
+            setUserInput('');
+            setFeedback(null);
+            setApplyStyle(false);
+          }}
+          className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold flex items-center gap-2 transition-all hover:scale-105"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Reset
+        </button>
+        <button
+          onClick={handleSubmit}
+          className="px-8 py-3 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 font-semibold flex items-center gap-2 transform hover:scale-105 transition-all shadow-lg shadow-pink-500/50"
+        >
+          <Play className="w-4 h-4" />
+          Apply Style
+        </button>
       </div>
+
+      {/* Feedback */}
+      {feedback && (
+        <div className={`p-4 rounded-2xl flex items-center justify-center gap-3 animate-slide-down ${
+          feedback.type === 'success'
+            ? 'bg-green-500/20 border border-green-500/50'
+            : 'bg-red-500/20 border border-red-500/50'
+        }`}>
+          {feedback.type === 'success' ? (
+            <CheckCircle className="w-5 h-5 text-green-500" />
+          ) : (
+            <XCircle className="w-5 h-5 text-red-500" />
+          )}
+          <span className="font-semibold text-lg">{feedback.message}</span>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slide-down {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };

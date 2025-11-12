@@ -1,395 +1,475 @@
-import React, { useState, useEffect } from 'react';
-import { Database, Terminal, Palette, Package, Info, ChevronRight, Moon, Sun, Menu, X, CheckCircle, Book, Zap } from 'lucide-react';
-import SQLGame from './components/SQLGame';
-import LinuxGame from './components/LinuxGame';
-import CSSGame from './components/CSSGame';
-import DockerGame from './components/DockerGame';
+import { useState } from 'react';
+import {
+  Trophy, Flame, Star, Zap, Clock, Target,
+  Lightbulb, BookOpen, Play, RefreshCw, CheckCircle, XCircle,
+  ChevronLeft, Database
+} from 'lucide-react';
 
-export type Technology = 'sql' | 'linux' | 'css' | 'docker' | 'home';
+type Technology = 'sql' | 'linux' | 'css' | 'docker' | 'home';
 
-const TechLearningGame: React.FC = () => {
-  const [currentTech, setCurrentTech] = useState<Technology>('home');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+const CodeQuest = () => {
+  const [currentView, setCurrentView] = useState<Technology>('home');
+  const [currentLevel, setCurrentLevel] = useState(1);
+  const [userInput, setUserInput] = useState('');
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [showHint, setShowHint] = useState(false);
+  const [completedLevels, setCompletedLevels] = useState<number[]>([]);
 
-  // Load last selected tech from localStorage
-  useEffect(() => {
-    const savedTech = localStorage.getItem('techLearningGameCurrentTech');
-    if (savedTech) {
-      setCurrentTech(savedTech as Technology);
+  const sqlLevels = [
+    {
+      id: 1,
+      title: "Select All Employees",
+      task: "Retrieve all columns from the employees table",
+      hint: "Use SELECT * to get all columns",
+      concept: "SELECT * retrieves all columns from a table",
+      solution: "SELECT * FROM employees",
+      table: [
+        { id: 1, name: "Alice", department: "Engineering", salary: 75000 },
+        { id: 2, name: "Bob", department: "Sales", salary: 65000 },
+        { id: 3, name: "Charlie", department: "Engineering", salary: 80000 }
+      ]
+    },
+    {
+      id: 2,
+      title: "Filter by Department",
+      task: "Get all employees in the Engineering department",
+      hint: "Use WHERE to filter rows",
+      concept: "WHERE clause filters rows based on conditions",
+      solution: "SELECT * FROM employees WHERE department = 'Engineering'",
+      table: [
+        { id: 1, name: "Alice", department: "Engineering", salary: 75000 },
+        { id: 2, name: "Bob", department: "Sales", salary: 65000 },
+        { id: 3, name: "Charlie", department: "Engineering", salary: 80000 }
+      ]
+    },
+    {
+      id: 3,
+      title: "Filter by Salary",
+      task: "Retrieve all employees from the Engineering department with a salary greater than $70,000",
+      hint: "Use the WHERE clause with multiple conditions",
+      concept: "Combine conditions using AND/OR operators for complex filtering",
+      solution: "SELECT * FROM employees WHERE department = 'Engineering' AND salary > 70000",
+      table: [
+        { id: 1, name: "Alice", department: "Engineering", salary: 75000 },
+        { id: 2, name: "Bob", department: "Sales", salary: 65000 },
+        { id: 3, name: "Charlie", department: "Engineering", salary: 80000 }
+      ]
     }
-    
-    // Check user theme preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setTheme('dark');
-    }
-  }, []);
+  ];
 
-  // Save selected tech to localStorage
-  useEffect(() => {
-    localStorage.setItem('techLearningGameCurrentTech', currentTech);
-  }, [currentTech]);
+  const level = sqlLevels[currentLevel - 1];
 
-  // Apply theme class to document
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
+  const handleSubmit = () => {
+    const normalized = userInput.trim().toLowerCase().replace(/\s+/g, ' ');
+    const solutionNormalized = level.solution.toLowerCase().replace(/\s+/g, ' ');
+
+    if (normalized === solutionNormalized) {
+      setFeedback({ type: 'success', message: '🎉 Perfect! +100 XP' });
+      if (!completedLevels.includes(currentLevel)) {
+        setCompletedLevels([...completedLevels, currentLevel]);
+      }
+      setTimeout(() => {
+        if (currentLevel < sqlLevels.length) {
+          setCurrentLevel(currentLevel + 1);
+          setUserInput('');
+          setFeedback(null);
+          setShowHint(false);
+        }
+      }, 2000);
     } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  };
-
-  const handleTechChange = (tech: Technology) => {
-    setCurrentTech(tech);
-    setIsMobileMenuOpen(false); // Close mobile menu when changing tech
-  };
-
-  const renderContent = () => {
-    switch (currentTech) {
-      case 'sql':
-        return <SQLGame />;
-      case 'linux':
-        return <LinuxGame />;
-      case 'css':
-        return <CSSGame />;
-      case 'docker':
-        return <DockerGame />;
-      case 'home':
-      default:
-        return renderHomePage();
+      setFeedback({ type: 'error', message: '❌ Not quite right. Try again!' });
     }
   };
 
-  const renderHomePage = () => {
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-            Welcome to Tech Learning Game
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            An interactive platform to learn technology concepts through hands-on practice. 
-            Choose a technology path below to start your learning journey.
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div 
-            className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 shadow-lg rounded-xl p-6 hover:shadow-xl transition-all cursor-pointer"
-            onClick={() => handleTechChange('sql')}
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-blue-600 text-white rounded-lg">
-                <Database className="w-7 h-7" />
-              </div>
-              <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-300">SQL</h2>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Learn database queries and operations. Master SELECT statements, filtering with WHERE, 
-              joining tables, and aggregating data.
-            </p>
-            <div className="flex justify-end">
-              <button className="text-blue-600 dark:text-blue-300 font-medium flex items-center gap-1">
-                Start Learning <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          
-          <div 
-            className="bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/30 dark:to-teal-900/30 shadow-lg rounded-xl p-6 hover:shadow-xl transition-all cursor-pointer"
-            onClick={() => handleTechChange('linux')}
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-green-600 text-white rounded-lg">
-                <Terminal className="w-7 h-7" />
-              </div>
-              <h2 className="text-2xl font-bold text-green-700 dark:text-green-300">Linux</h2>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Master command-line operations and file system management. Learn navigation, file manipulation, 
-              permissions, and advanced file operations.
-            </p>
-            <div className="flex justify-end">
-              <button className="text-green-600 dark:text-green-300 font-medium flex items-center gap-1">
-                Start Learning <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          
-          <div 
-            className="bg-gradient-to-br from-pink-50 to-red-50 dark:from-pink-900/30 dark:to-red-900/30 shadow-lg rounded-xl p-6 hover:shadow-xl transition-all cursor-pointer"
-            onClick={() => handleTechChange('css')}
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-pink-600 text-white rounded-lg">
-                <Palette className="w-7 h-7" />
-              </div>
-              <h2 className="text-2xl font-bold text-pink-700 dark:text-pink-300">CSS</h2>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Explore styling and layout techniques. Learn basic styling, flexbox, responsive design, 
-              animations, and advanced selectors.
-            </p>
-            <div className="flex justify-end">
-              <button className="text-pink-600 dark:text-pink-300 font-medium flex items-center gap-1">
-                Start Learning <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          
-          <div 
-            className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/30 dark:to-blue-900/30 shadow-lg rounded-xl p-6 hover:shadow-xl transition-all cursor-pointer"
-            onClick={() => handleTechChange('docker')}
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-cyan-600 text-white rounded-lg">
-                <Package className="w-7 h-7" />
-              </div>
-              <h2 className="text-2xl font-bold text-cyan-700 dark:text-cyan-300">Docker</h2>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Learn container management and orchestration. Master images, containers, networks,
-              volumes, and multi-container setups.
-            </p>
-            <div className="flex justify-end">
-              <button className="text-cyan-600 dark:text-cyan-300 font-medium flex items-center gap-1">
-                Start Learning <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-12 bg-gray-50 dark:bg-gray-800 p-6 rounded-xl shadow">
-          <div className="flex items-start gap-4">
-            <div className="bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded-lg">
-              <Info className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                About this Platform
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                The Tech Learning Game platform is designed to provide an interactive, hands-on approach 
-                to learning technical concepts. Each module features progressive levels that build on 
-                previous knowledge, with immediate feedback and visual representations to reinforce learning.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-4">
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span>Hands-on practice</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                  <Book className="w-5 h-5 text-blue-500" />
-                  <span>Concept explanations</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                  <Zap className="w-5 h-5 text-yellow-500" />
-                  <span>Real-time feedback</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  const styles = {
+    bgPrimary: { backgroundColor: '#1a1a2e' },
+    bgCard: { background: 'linear-gradient(135deg, #2d2d52 0%, #1f1f3a 100%)' },
+    bgCardDark: { backgroundColor: '#1a1a2e' },
+    bgEditor: { backgroundColor: '#16213e' },
+    borderLight: { border: '1px solid rgba(255, 255, 255, 0.1)' },
+    borderPurple: { border: '1px solid rgba(167, 139, 250, 0.3)' },
+    gradientPurple: { background: 'linear-gradient(90deg, #a78bfa 0%, #7c3aed 50%, #6366f1 100%)' },
+    gradientXP: { background: 'linear-gradient(90deg, #06b6d4 0%, #a855f7 50%, #ec4899 100%)' },
+    textGradient: { background: 'linear-gradient(90deg, #a78bfa 0%, #c084fc 50%, #e879f9 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' },
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => handleTechChange('home')}
-                className="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"
-                aria-label="Go to home page"
-              >
-                <Terminal className="text-purple-600 w-7 h-7" />
-                <span className="hidden sm:inline">Tech Learning Game</span>
-              </button>
-            </div>
-            
-            {/* Mobile menu button */}
-            <div className="lg:hidden">
-              <button 
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                aria-expanded={isMobileMenuOpen}
-                aria-controls="mobile-menu"
-              >
-                {isMobileMenuOpen ? 
-                  <X className="w-6 h-6" aria-hidden="true" /> : 
-                  <Menu className="w-6 h-6" aria-hidden="true" />
-                }
-              </button>
-            </div>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-2">
-              <button
-                onClick={() => handleTechChange('sql')}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  currentTech === 'sql' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                }`}
-                aria-current={currentTech === 'sql' ? 'true' : 'false'}
-              >
-                <Database className="inline w-4 h-4 mr-2" />
-                SQL
-              </button>
-              <button
-                onClick={() => handleTechChange('linux')}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  currentTech === 'linux' 
-                    ? 'bg-green-600 text-white' 
-                    : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                }`}
-                aria-current={currentTech === 'linux' ? 'true' : 'false'}
-              >
-                <Terminal className="inline w-4 h-4 mr-2" />
-                Linux
-              </button>
-              <button
-                onClick={() => handleTechChange('css')}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  currentTech === 'css' 
-                    ? 'bg-pink-600 text-white' 
-                    : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                }`}
-                aria-current={currentTech === 'css' ? 'true' : 'false'}
-              >
-                <Palette className="inline w-4 h-4 mr-2" />
-                CSS
-              </button>
-              <button
-                onClick={() => handleTechChange('docker')}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  currentTech === 'docker' 
-                    ? 'bg-cyan-600 text-white' 
-                    : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                }`}
-                aria-current={currentTech === 'docker' ? 'true' : 'false'}
-              >
-                <Package className="inline w-4 h-4 mr-2" />
-                Docker
-              </button>
-              
-              <button
-                onClick={toggleTheme}
-                className="ml-2 p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-                aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-              >
-                {theme === 'light' ? 
-                  <Moon className="w-5 h-5" /> : 
-                  <Sun className="w-5 h-5" />
-                }
-              </button>
+    <div style={{ minHeight: '100vh', ...styles.bgPrimary, color: '#fff' }}>
+      {/* Placeholder style block */}
+      <style>
+        {`
+          .sql-input::placeholder {
+            color: #6b7280;
+            opacity: 1;
+          }
+        `}
+      </style>
+      {/* Navigation */}
+      <nav style={{ ...styles.borderLight, borderTop: 'none', borderLeft: 'none', borderRight: 'none' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button
+              onClick={() => setCurrentView('home')}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              <div style={{ width: '48px', height: '48px', borderRadius: '16px', ...styles.gradientPurple, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+                📱
+              </div>
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#a78bfa' }}>CodeQuest</span>
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '9999px', ...styles.bgCardDark, ...styles.borderLight }}>
+                <Flame style={{ width: '20px', height: '20px', color: '#f97316' }} />
+                <span style={{ fontWeight: 600 }}>7</span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '9999px', ...styles.bgCardDark, ...styles.borderLight }}>
+                <Star style={{ width: '20px', height: '20px', color: '#eab308' }} />
+                <span>Level 12</span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 1rem', borderRadius: '9999px', ...styles.bgCardDark, ...styles.borderLight }}>
+                <div style={{ width: '128px', height: '8px', backgroundColor: '#16213e', borderRadius: '9999px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: '65%', ...styles.gradientXP }} />
+                </div>
+                <span style={{ fontSize: '0.875rem' }}>2,450 XP</span>
+              </div>
+
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', ...styles.gradientPurple, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                B
+              </div>
             </div>
           </div>
-          
-          {/* Mobile menu */}
-          {isMobileMenuOpen && (
-            <div id="mobile-menu" className="mt-4 lg:hidden">
-              <div className="flex flex-col gap-2 pt-2 pb-3 border-t dark:border-gray-700">
+        </div>
+      </nav>
+
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+        {currentView === 'home' ? (
+          <>
+            {/* Hero */}
+            <div style={{ textAlign: 'center', padding: '4rem 0', marginBottom: '3rem' }}>
+              <h1 style={{ fontSize: '4.5rem', fontWeight: 900, marginBottom: '1rem', ...styles.textGradient }}>
+                Master Code Through Play
+              </h1>
+              <p style={{ fontSize: '1.25rem', color: '#9ca3af' }}>
+                Interactive challenges, real-time feedback, and gamified learning paths
+              </p>
+            </div>
+
+            {/* Daily Challenge */}
+            <div style={{ marginBottom: '3rem', borderRadius: '24px', ...styles.bgCard, ...styles.borderPurple, padding: '2rem', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, right: 0, fontSize: '200px', opacity: 0.05 }}>⚡</div>
+              <div style={{ position: 'relative', zIndex: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Zap style={{ width: '28px', height: '28px', color: '#fbbf24' }} />
+                    <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Daily Challenge: SQL Join Mastery</h2>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '9999px', ...styles.bgCardDark, ...styles.borderLight }}>
+                    <Clock style={{ width: '16px', height: '16px', color: '#ef4444' }} />
+                    <span>12:34:56</span>
+                  </div>
+                </div>
+                <p style={{ color: '#9ca3af', fontSize: '1.125rem', marginBottom: '1.5rem' }}>
+                  Complete today's challenge to maintain your streak and earn 2x XP bonus!
+                </p>
                 <button
-                  onClick={() => handleTechChange('sql')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                    currentTech === 'sql' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                  }`}
+                  onClick={() => setCurrentView('sql')}
+                  style={{ padding: '0.75rem 2rem', borderRadius: '12px', ...styles.gradientPurple, border: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#fff' }}
                 >
-                  <Database className="inline w-4 h-4 mr-2" />
-                  SQL
-                </button>
-                <button
-                  onClick={() => handleTechChange('linux')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                    currentTech === 'linux' 
-                      ? 'bg-green-600 text-white' 
-                      : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  <Terminal className="inline w-4 h-4 mr-2" />
-                  Linux
-                </button>
-                <button
-                  onClick={() => handleTechChange('css')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                    currentTech === 'css' 
-                      ? 'bg-pink-600 text-white' 
-                      : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  <Palette className="inline w-4 h-4 mr-2" />
-                  CSS
-                </button>
-                <button
-                  onClick={() => handleTechChange('docker')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                    currentTech === 'docker' 
-                      ? 'bg-cyan-600 text-white' 
-                      : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  <Package className="inline w-4 h-4 mr-2" />
-                  Docker
-                </button>
-                
-                <button
-                  onClick={toggleTheme}
-                  className="mt-2 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center"
-                >
-                  {theme === 'light' ? 
-                    <><Moon className="w-4 h-4 mr-2" /> Dark Mode</> : 
-                    <><Sun className="w-4 h-4 mr-2" /> Light Mode</>
-                  }
+                  Start Challenge →
                 </button>
               </div>
             </div>
-          )}
-        </div>
-      </header>
 
-      {/* Render the selected game */}
-      {renderContent()}
-      
-      {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 shadow-inner mt-8 py-6">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-gray-600 dark:text-gray-300 text-sm">
-              © 2025 Tech Learning Games | All rights reserved
+            {/* Learning Paths */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '3rem' }}>
+              {[
+                { id: 'sql', icon: '🗄️', title: 'SQL Mastery', desc: 'Master database queries from basic SELECT to complex JOINs', gradient: 'linear-gradient(90deg, #7c3aed, #4f46e5)', progress: 45, badges: ['SELECT', 'WHERE', 'JOIN'] },
+                { id: 'linux', icon: '💻', title: 'Linux Command Line', desc: 'Navigate the terminal like a pro', gradient: 'linear-gradient(90deg, #059669, #14b8a6)', progress: 30, badges: ['Navigation', 'File Ops', 'Permissions'] },
+                { id: 'css', icon: '🎨', title: 'CSS Wizardry', desc: 'Create stunning designs with modern CSS', gradient: 'linear-gradient(90deg, #db2777, #f43f5e)', progress: 60, badges: ['Flexbox', 'Grid', 'Animations'] },
+                { id: 'docker', icon: '🐳', title: 'Docker Containers', desc: 'Build, ship, and run applications', gradient: 'linear-gradient(90deg, #0891b2, #3b82f6)', progress: 25, badges: ['Images', 'Containers', 'Networks'] }
+              ].map((path) => (
+                <div
+                  key={path.id}
+                  onClick={() => setCurrentView(path.id as Technology)}
+                  style={{ borderRadius: '24px', ...styles.bgCard, ...styles.borderLight, padding: '1.5rem', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
+                >
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: path.gradient }} />
+
+                  <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: path.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', marginBottom: '1rem' }}>
+                    {path.icon}
+                  </div>
+
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{path.title}</h3>
+                  <p style={{ color: '#9ca3af', fontSize: '0.875rem', marginBottom: '1rem' }}>{path.desc}</p>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    <div style={{ flex: 1, height: '8px', backgroundColor: '#16213e', borderRadius: '9999px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${path.progress}%`, background: path.gradient }} />
+                    </div>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{path.progress}%</span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {path.badges.map((badge) => (
+                      <span key={badge} style={{ padding: '0.25rem 0.75rem', borderRadius: '9999px', ...styles.bgCardDark, ...styles.borderLight, fontSize: '0.75rem' }}>
+                        {badge}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex gap-4">
-              <button 
-                onClick={() => handleTechChange('home')}
-                className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-sm"
-              >
-                Home
-              </button>
-              <button className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-sm">
-                About
-              </button>
-              <button className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-sm">
-                Privacy
-              </button>
-              <button className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-sm">
-                Terms
-              </button>
+
+            {/* Leaderboard */}
+            <div style={{ borderRadius: '24px', ...styles.bgCard, ...styles.borderLight, padding: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <Trophy style={{ width: '28px', height: '28px', color: '#eab308' }} />
+                  <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Leaderboard</h2>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {['Daily', 'Weekly', 'All Time'].map((filter, idx) => (
+                    <button
+                      key={filter}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        border: 'none',
+                        cursor: 'pointer',
+                        ...(idx === 0 ? { ...styles.gradientPurple, color: '#fff' } : { ...styles.bgCardDark, color: '#fff' })
+                      }}
+                    >
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {[
+                  { rank: 1, name: "Sarah Chen", level: 28, title: "Master", score: 12450, avatar: "S", medalColor: 'linear-gradient(135deg, #fbbf24, #f97316)' },
+                  { rank: 2, name: "Mike Johnson", level: 24, title: "Expert", score: 10230, avatar: "M", medalColor: 'linear-gradient(135deg, #d1d5db, #6b7280)' },
+                  { rank: 3, name: "Alex Rodriguez", level: 22, title: "Expert", score: 9890, avatar: "A", medalColor: 'linear-gradient(135deg, #fb923c, #ea580c)' },
+                  { rank: 12, name: "You", level: 12, title: "Intermediate", score: 8450, avatar: "B", isUser: true }
+                ].map((user) => (
+                  <div
+                    key={user.rank}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      padding: '1rem',
+                      borderRadius: '16px',
+                      ...(user.isUser ? { backgroundColor: 'rgba(139, 92, 246, 0.2)', border: '1px solid rgba(139, 92, 246, 0.4)' } : styles.bgCardDark)
+                    }}
+                  >
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 'bold',
+                      ...(user.medalColor ? { background: user.medalColor } : styles.bgCardDark)
+                    }}>
+                      {user.rank}
+                    </div>
+
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', ...styles.gradientPurple, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.125rem' }}>
+                      {user.avatar}
+                    </div>
+
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600 }}>{user.name}</div>
+                      <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>Level {user.level} • {user.title}</div>
+                    </div>
+
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', ...styles.textGradient }}>
+                      {user.score.toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-      </footer>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setCurrentView('home')}
+              style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '1rem' }}
+            >
+              <ChevronLeft style={{ width: '16px', height: '16px' }} />
+              Back to Home
+            </button>
+
+            <div style={{ borderRadius: '24px', ...styles.bgCard, ...styles.borderLight, padding: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Current Challenge: SQL Level {currentLevel}</h2>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {sqlLevels.map((l) => (
+                    <div
+                      key={l.id}
+                      style={{
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        backgroundColor: completedLevels.includes(l.id) ? '#22c55e' : l.id === currentLevel ? '#a855f7' : '#4b5563'
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+                {/* Left Panel */}
+                <div>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <Target style={{ width: '20px', height: '20px', color: '#ec4899' }} />
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ec4899' }}>Your Mission</h3>
+                    </div>
+                    <p style={{ color: '#d1d5db', fontSize: '1.125rem' }}>{level.task}</p>
+                  </div>
+
+                  <div style={{ borderRadius: '16px', ...styles.bgCardDark, border: '1px solid rgba(234, 179, 8, 0.3)', padding: '1rem', marginBottom: '1rem' }}>
+                    <button
+                      onClick={() => setShowHint(!showHint)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', width: '100%', background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: '1rem', padding: 0 }}
+                    >
+                      <Lightbulb style={{ width: '16px', height: '16px' }} />
+                      <span style={{ fontWeight: 600 }}>Hint</span>
+                    </button>
+                    {showHint && <p style={{ fontSize: '0.875rem', color: '#9ca3af' }}>{level.hint}</p>}
+                  </div>
+
+                  <div style={{ borderRadius: '16px', ...styles.bgCardDark, border: '1px solid rgba(59, 130, 246, 0.3)', padding: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <BookOpen style={{ width: '16px', height: '16px', color: '#3b82f6' }} />
+                      <span style={{ fontWeight: 600, color: '#3b82f6' }}>Concept</span>
+                    </div>
+                    <p style={{ fontSize: '0.875rem', color: '#9ca3af' }}>{level.concept}</p>
+                  </div>
+                </div>
+
+                {/* Right Panel */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <Database style={{ width: '20px', height: '20px', color: '#22c55e' }} />
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#22c55e' }}>Database Table</h3>
+                  </div>
+                  <div style={{ borderRadius: '16px', ...styles.bgCardDark, padding: '1rem', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', fontSize: '0.875rem', fontFamily: 'monospace' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(139, 92, 246, 0.5)' }}>
+                          {Object.keys(level.table[0]).map((key) => (
+                            <th key={key} style={{ padding: '0.5rem 1rem', textAlign: 'left', fontWeight: 600, color: '#a78bfa' }}>
+                              {key.charAt(0).toUpperCase() + key.slice(1)}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {level.table.map((row, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                            {Object.values(row).map((val, i) => (
+                              <td key={i} style={{ padding: '0.75rem 1rem', color: '#d1d5db' }}>
+                                {typeof val === 'number' && val > 1000 ? `$${val.toLocaleString()}` : val}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* SQL Editor */}
+              <div style={{ borderRadius: '16px', ...styles.bgEditor, ...styles.borderLight, overflow: 'hidden', marginBottom: '1.5rem' }}>
+                <div style={{ ...styles.bgCardDark, padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
+                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#eab308' }} />
+                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
+                  </div>
+                  <span style={{ fontSize: '0.875rem', color: '#9ca3af', fontFamily: 'monospace' }}>SQL Editor</span>
+                </div>
+                <div style={{ padding: '1.5rem' }}>
+                  <input
+                    type="text"
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
+                    placeholder="SELECT * FROM employees WHERE ..."
+                    style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: '1.125rem',
+                      fontFamily: 'monospace',
+                      color: '#fff'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <button
+                  onClick={() => setShowHint(!showHint)}
+                  style={{ padding: '0.75rem 1.5rem', borderRadius: '12px', ...styles.bgCardDark, ...styles.borderLight, border: '1px solid rgba(255, 255, 255, 0.1)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#fff' }}
+                >
+                  <Lightbulb style={{ width: '16px', height: '16px' }} />
+                  Hint
+                </button>
+                <button
+                  onClick={() => { setUserInput(''); setFeedback(null); }}
+                  style={{ padding: '0.75rem 1.5rem', borderRadius: '12px', ...styles.bgCardDark, ...styles.borderLight, border: '1px solid rgba(255, 255, 255, 0.1)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#fff' }}
+                >
+                  <RefreshCw style={{ width: '16px', height: '16px' }} />
+                  Reset
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  style={{ padding: '0.75rem 2rem', borderRadius: '12px', ...styles.gradientPurple, border: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#fff' }}
+                >
+                  <Play style={{ width: '16px', height: '16px' }} />
+                  Run Query
+                </button>
+              </div>
+
+              {feedback && (
+                <div style={{
+                  padding: '1rem',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  ...(feedback.type === 'success'
+                    ? { backgroundColor: 'rgba(34, 197, 94, 0.2)', border: '1px solid rgba(34, 197, 94, 0.5)' }
+                    : { backgroundColor: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.5)' })
+                }}>
+                  {feedback.type === 'success' ?
+                    <CheckCircle style={{ width: '20px', height: '20px', color: '#22c55e' }} /> :
+                    <XCircle style={{ width: '20px', height: '20px', color: '#ef4444' }} />
+                  }
+                  <span style={{ fontWeight: 600, fontSize: '1.125rem' }}>{feedback.message}</span>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
 
-export default TechLearningGame;
+export default CodeQuest;
