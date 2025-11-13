@@ -1,5 +1,3 @@
-// src/storage/storage.ts
-
 // ==================== CORE INTERFACES ====================
 
 export interface UserInfo {
@@ -144,7 +142,19 @@ export const skillProgress: SkillProgress[] = [
 
 export const recentActivities: RecentActivity[] = [];
 
-export const dailyChallenges: DailyChallenge[] = [];
+export const dailyChallenges: DailyChallenge[] = [
+  {
+    id: 'dc-001',
+    title: 'SQL Join Mastery',
+    description: 'Master complex JOIN operations',
+    technology: 'sql',
+    difficulty: 'hard',
+    xpReward: 200,
+    bonusXP: 200,
+    deadline: new Date().toISOString().slice(0, 10) + 'T23:59:59Z',
+    completed: false,
+  },
+];
 
 export const supportedLanguages: SupportedLanguage[] = [
   {
@@ -226,6 +236,23 @@ export const getAchievementsByCategory = (category: string): Achievement[] => {
   return achievements.filter((ach) => ach.category === category);
 };
 
+export const getCurrentUser = (): UserInfo => {
+  return users[0];
+};
+
+export const getCurrentStreak = (): LearningStreak => {
+  if (!learningStreaks[0]) {
+    const today = new Date().toISOString().slice(0, 10);
+    learningStreaks.push({
+      currentStreak: 0,
+      longestStreak: 0,
+      lastCompletedDate: '',
+      streakStartDate: today,
+    });
+  }
+  return learningStreaks[0];
+};
+
 // ==================== QUESTION ATTEMPT STATE ====================
 
 export type TechnologyId = 'sql' | 'css' | 'docker' | 'linux';
@@ -293,6 +320,122 @@ export const markQuestionAttempted = (params: {
       correctOnFirstTry,
       lastAttemptedAt: now,
     });
+  }
+};
+
+// ==================== ACTIVITY & XP LOGGING ====================
+
+export interface ChallengeMeta {
+  technology: TechnologyId;
+  levelId: number;
+  title?: string;
+  timeSpent?: number; // seconds
+}
+
+const formatTimeLabel = () => {
+  // Simple label for recent activities
+  return 'Just now';
+};
+
+const updateStreakForToday = () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const streak = getCurrentStreak();
+
+  if (!streak.lastCompletedDate) {
+    streak.currentStreak = 1;
+    streak.longestStreak = 1;
+    streak.lastCompletedDate = today;
+    streak.streakStartDate = today;
+    return;
+  }
+
+  if (streak.lastCompletedDate === today) {
+    // already counted today
+    return;
+  }
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = yesterday.toISOString().slice(0, 10);
+
+  if (streak.lastCompletedDate === yStr) {
+    streak.currentStreak += 1;
+  } else {
+    streak.currentStreak = 1;
+    streak.streakStartDate = today;
+  }
+
+  streak.lastCompletedDate = today;
+  if (streak.currentStreak > streak.longestStreak) {
+    streak.longestStreak = streak.currentStreak;
+  }
+};
+
+export const recordChallengeCompletion = (
+  userId: string,
+  xpEarned: number,
+  meta?: ChallengeMeta
+) => {
+  const now = new Date().toISOString();
+  const user = users.find((u) => u.id === userId);
+
+  // 1) Update user XP / level
+  if (user) {
+    user.currentXP += xpEarned;
+    user.totalXP += xpEarned;
+    user.lastActive = now;
+
+    // Simple level-up logic
+    while (user.currentXP >= user.nextLevelXP) {
+      user.currentXP -= user.nextLevelXP;
+      user.level += 1;
+      user.nextLevelXP += 500; // Increase XP requirement per level
+    }
+  }
+
+  // 2) Save completed challenge if we know the tech/level
+  if (meta) {
+    completedChallenges.push({
+      id: `cc-${Date.now()}`,
+      technology: meta.technology,
+      levelId: meta.levelId,
+      completedAt: now,
+      xpEarned,
+      timeSpent: meta.timeSpent ?? 0,
+    });
+
+    // Update skill progress for that technology
+    const skill = skillProgress.find(
+      (s) => s.technology === meta.technology
+    );
+    if (skill) {
+      skill.xpEarned += xpEarned;
+      if (meta.levelId > skill.levelsCompleted) {
+        skill.levelsCompleted = meta.levelId;
+      }
+      skill.progress = Math.min(
+        100,
+        Math.round((skill.levelsCompleted / skill.totalLevels) * 100)
+      );
+    }
+  }
+
+  // 3) Update streak
+  updateStreakForToday();
+
+  // 4) Log recent activity
+  recentActivities.unshift({
+    id: `ra-${Date.now()}`,
+    icon: '✅',
+    text: meta?.title || 'Challenge completed',
+    time: formatTimeLabel(),
+    xpGained: xpEarned,
+    type: 'completion',
+  });
+
+  // Keep only the latest 20 activities
+  if (recentActivities.length > 20) {
+    recentActivities.length = 20;
   }
 };
 

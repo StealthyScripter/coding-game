@@ -1,6 +1,11 @@
-// src/CodeQuest.tsx
-import React, { useState } from 'react';
-import { Trophy, Flame, Star, Zap, Clock } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Trophy,
+  Flame,
+  Star,
+  Zap,
+  Clock,
+} from 'lucide-react';
 
 import SQLGame from './components/SQLGame';
 import CSSGame from './components/CSSGame';
@@ -8,59 +13,44 @@ import DockerGame from './components/DockerGame';
 import LinuxGame from './components/LinuxGame';
 
 import {
-  users,
-  learningStreaks,
+  getCurrentUser,
+  getCurrentStreak,
   recentActivities,
   achievements,
   dailyChallenges,
   supportedLanguages,
-  skillProgress,
   getTotalChallengesCompleted,
   getSkillsMastered,
+  skillProgress,
+  recordChallengeCompletion,
 } from './storage/storage';
+
+import type { ChallengeMeta } from './storage/storage';
 
 type Technology = 'sql' | 'linux' | 'css' | 'docker' | 'home';
 
-const CodeQuest: React.FC = () => {
-  const currentUser = users[0] ?? {
-    id: 'placeholder',
-    name: 'Player',
-    email: '',
-    avatar: 'P',
-    level: 1,
-    currentXP: 0,
-    nextLevelXP: 1000,
-    totalXP: 0,
-    joinDate: '',
-    lastActive: '',
-  };
-
-  const currentStreak = learningStreaks[0] ?? {
-    currentStreak: 0,
-    longestStreak: 0,
-    lastCompletedDate: '',
-    streakStartDate: '',
-  };
+const CodeQuest = () => {
+  const user = getCurrentUser();
+  const streak = getCurrentStreak();
 
   const [currentView, setCurrentView] = useState<Technology>('home');
-  const [totalXP, setTotalXP] = useState(currentUser.currentXP);
+  const [currentXP, setCurrentXP] = useState(user.currentXP);
 
-  const handleChallengeComplete = (xp: number) => {
-    setTotalXP((prev) => prev + xp);
-    // you can also update users[0].currentXP / totalXP here if you like
+  // onComplete from games:
+  // you can call: onComplete(xp) OR onComplete(xp, { technology, levelId, title, timeSpent })
+  const handleChallengeComplete = (xp: number, meta?: ChallengeMeta) => {
+    recordChallengeCompletion(user.id, xp, meta);
+    // Refresh XP from "DB"
+    const refreshedUser = getCurrentUser();
+    setCurrentXP(refreshedUser.currentXP);
   };
 
   const styles = {
     bgPrimary: { backgroundColor: '#1a1a2e' },
-    bgCard: {
-      background:
-        'linear-gradient(135deg, #2d2d52 0%, #1f1f3a 100%)',
-    },
+    bgCard: { background: 'linear-gradient(135deg, #2d2d52 0%, #1f1f3a 100%)' },
     bgCardDark: { backgroundColor: '#1a1a2e' },
     borderLight: { border: '1px solid rgba(255, 255, 255, 0.1)' },
-    borderPurple: {
-      border: '1px solid rgba(167, 139, 250, 0.3)',
-    },
+    borderPurple: { border: '1px solid rgba(167, 139, 250, 0.3)' },
     gradientPurple: {
       background:
         'linear-gradient(90deg, #a78bfa 0%, #7c3aed 50%, #6366f1 100%)',
@@ -72,28 +62,17 @@ const CodeQuest: React.FC = () => {
     textGradient: {
       background:
         'linear-gradient(90deg, #a78bfa 0%, #c084fc 50%, #e879f9 100%)',
-      WebkitBackgroundClip: 'text' as const,
+      WebkitBackgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
       backgroundClip: 'text',
-    },
+    } as React.CSSProperties,
   };
 
-  const unlockedCount = achievements.filter((a) => a.unlocked).length;
-  const xpProgress =
-    currentUser.nextLevelXP > 0
-      ? Math.min(100, (totalXP / currentUser.nextLevelXP) * 100)
-      : 0;
-
-  const mainDaily = dailyChallenges[0];
+  const totalChallenges = getTotalChallengesCompleted();
+  const skillsMastered = getSkillsMastered();
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        ...styles.bgPrimary,
-        color: '#fff',
-      }}
-    >
+    <div style={{ minHeight: '100vh', ...styles.bgPrimary, color: '#fff' }}>
       {/* Navigation */}
       <nav
         style={{
@@ -153,14 +132,8 @@ const CodeQuest: React.FC = () => {
               </span>
             </button>
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1rem',
-              }}
-            >
-              {/* Streak pill */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              {/* Streak */}
               <div
                 style={{
                   display: 'flex',
@@ -173,18 +146,14 @@ const CodeQuest: React.FC = () => {
                 }}
               >
                 <Flame
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    color: '#f97316',
-                  }}
+                  style={{ width: '20px', height: '20px', color: '#f97316' }}
                 />
                 <span style={{ fontWeight: 600 }}>
-                  {currentStreak.currentStreak}
+                  {streak.currentStreak}d
                 </span>
               </div>
 
-              {/* Level pill */}
+              {/* Level */}
               <div
                 style={{
                   display: 'flex',
@@ -197,16 +166,12 @@ const CodeQuest: React.FC = () => {
                 }}
               >
                 <Star
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    color: '#eab308',
-                  }}
+                  style={{ width: '20px', height: '20px', color: '#eab308' }}
                 />
-                <span>Level {currentUser.level}</span>
+                <span>Level {user.level}</span>
               </div>
 
-              {/* XP pill */}
+              {/* XP Bar */}
               <div
                 style={{
                   display: 'flex',
@@ -230,13 +195,13 @@ const CodeQuest: React.FC = () => {
                   <div
                     style={{
                       height: '100%',
-                      width: `${xpProgress}%`,
+                      width: `${(currentXP / user.nextLevelXP) * 100}%`,
                       ...styles.gradientXP,
                     }}
                   />
                 </div>
                 <span style={{ fontSize: '0.875rem' }}>
-                  {totalXP.toLocaleString()} XP
+                  {currentXP.toLocaleString()} XP
                 </span>
               </div>
 
@@ -253,14 +218,13 @@ const CodeQuest: React.FC = () => {
                   fontWeight: 'bold',
                 }}
               >
-                {currentUser.avatar}
+                {user.avatar}
               </div>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* MAIN CONTENT */}
       <div
         style={{
           maxWidth: '1280px',
@@ -296,8 +260,8 @@ const CodeQuest: React.FC = () => {
                     marginBottom: '2rem',
                   }}
                 >
-                  Interactive challenges, real-time feedback, and
-                  gamified learning paths
+                  Interactive challenges, real-time feedback, and gamified
+                  learning paths
                 </p>
               </div>
 
@@ -314,25 +278,25 @@ const CodeQuest: React.FC = () => {
                   {
                     icon: '🎯',
                     label: 'Challenges Completed',
-                    value: getTotalChallengesCompleted().toString(),
+                    value: totalChallenges.toString(),
                     color: '#a78bfa',
                   },
                   {
                     icon: '⚡',
                     label: 'Current Streak',
-                    value: `${currentStreak.currentStreak} days`,
+                    value: `${streak.currentStreak} days`,
                     color: '#fbbf24',
                   },
                   {
                     icon: '🏆',
                     label: 'Total XP',
-                    value: totalXP.toLocaleString(),
+                    value: user.totalXP.toLocaleString(),
                     color: '#22c55e',
                   },
                   {
                     icon: '📚',
                     label: 'Skills Mastered',
-                    value: getSkillsMastered().toString(),
+                    value: skillsMastered.toString(),
                     color: '#3b82f6',
                   },
                 ].map((stat, idx) => (
@@ -401,7 +365,7 @@ const CodeQuest: React.FC = () => {
                     icon: '🏅',
                     title: 'Achievements',
                     desc: 'View your progress',
-                    action: `${unlockedCount} Unlocked`,
+                    action: `${achievements.filter((a) => a.unlocked).length} Unlocked`,
                   },
                 ].map((action, idx) => (
                   <div
@@ -506,7 +470,7 @@ const CodeQuest: React.FC = () => {
                         fontWeight: 'bold',
                       }}
                     >
-                      {mainDaily?.title || 'Daily Challenge'}
+                      {dailyChallenges[0]?.title || 'Daily Challenge'}
                     </h2>
                   </div>
                   <div
@@ -527,7 +491,7 @@ const CodeQuest: React.FC = () => {
                         color: '#ef4444',
                       }}
                     />
-                    <span>12:34:56</span>
+                    <span>Time left</span>
                   </div>
                 </div>
                 <p
@@ -537,7 +501,7 @@ const CodeQuest: React.FC = () => {
                     marginBottom: '1.5rem',
                   }}
                 >
-                  {mainDaily?.description ||
+                  {dailyChallenges[0]?.description ||
                     "Complete today's challenge to maintain your streak and earn bonus XP!"}
                 </p>
                 <button
@@ -577,7 +541,7 @@ const CodeQuest: React.FC = () => {
                   <div
                     key={lang.id}
                     onClick={() =>
-                      setCurrentView(lang.id as Technology)
+                      setCurrentView(lang.id as Exclude<Technology, 'home'>)
                     }
                     style={{
                       borderRadius: '24px',
@@ -746,52 +710,58 @@ const CodeQuest: React.FC = () => {
                     gap: '1rem',
                   }}
                 >
-                  {recentActivities.map((activity) => (
-                    <div
-                      key={activity.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        padding: '1rem',
-                        borderRadius: '16px',
-                        ...styles.bgCardDark,
-                      }}
-                    >
-                      <div style={{ fontSize: '1.5rem' }}>
-                        {activity.icon}
+                  {recentActivities.length === 0 ? (
+                    <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>
+                      Complete a challenge to see your activity here.
+                    </p>
+                  ) : (
+                    recentActivities.map((activity) => (
+                      <div
+                        key={activity.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem',
+                          padding: '1rem',
+                          borderRadius: '16px',
+                          ...styles.bgCardDark,
+                        }}
+                      >
+                        <div style={{ fontSize: '1.5rem' }}>
+                          {activity.icon}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              marginBottom: '0.25rem',
+                            }}
+                          >
+                            {activity.text}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '0.875rem',
+                              color: '#9ca3af',
+                            }}
+                          >
+                            {activity.time}
+                          </div>
+                        </div>
+                        {activity.xpGained && (
+                          <div
+                            style={{
+                              fontSize: '0.875rem',
+                              fontWeight: 600,
+                              color: '#22c55e',
+                            }}
+                          >
+                            +{activity.xpGained} XP
+                          </div>
+                        )}
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <div
-                          style={{
-                            fontWeight: 600,
-                            marginBottom: '0.25rem',
-                          }}
-                        >
-                          {activity.text}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: '0.875rem',
-                            color: '#9ca3af',
-                          }}
-                        >
-                          {activity.time}
-                        </div>
-                      </div>
-                      {activity.xpGained && (
-                        <div
-                          style={{
-                            fontSize: '0.875rem',
-                            fontWeight: 600,
-                            color: '#22c55e',
-                          }}
-                        >
-                          +{activity.xpGained} XP
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -829,46 +799,53 @@ const CodeQuest: React.FC = () => {
                   </h2>
                 </div>
 
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '1rem',
-                  }}
-                >
-                  {achievements.slice(0, 6).map((badge) => (
-                    <div
-                      key={badge.id}
-                      style={{
-                        borderRadius: '16px',
-                        ...styles.bgCardDark,
-                        padding: '1rem',
-                        textAlign: 'center',
-                        opacity: badge.unlocked ? 1 : 0.4,
-                        border: badge.unlocked
-                          ? '2px solid #eab308'
-                          : '1px solid rgba(255, 255, 255, 0.1)',
-                      }}
-                    >
+                {achievements.length === 0 ? (
+                  <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>
+                    You haven&apos;t unlocked any achievements yet. Keep
+                    playing!
+                  </p>
+                ) : (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
+                      gap: '1rem',
+                    }}
+                  >
+                    {achievements.slice(0, 6).map((badge) => (
                       <div
+                        key={badge.id}
                         style={{
-                          fontSize: '2rem',
-                          marginBottom: '0.5rem',
+                          borderRadius: '16px',
+                          ...styles.bgCardDark,
+                          padding: '1rem',
+                          textAlign: 'center',
+                          opacity: badge.unlocked ? 1 : 0.4,
+                          border: badge.unlocked
+                            ? '2px solid #eab308'
+                            : '1px solid rgba(255, 255, 255, 0.1)',
                         }}
                       >
-                        {badge.emoji}
+                        <div
+                          style={{
+                            fontSize: '2rem',
+                            marginBottom: '0.5rem',
+                          }}
+                        >
+                          {badge.emoji}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {badge.name}
+                        </div>
                       </div>
-                      <div
-                        style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {badge.name}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </>
